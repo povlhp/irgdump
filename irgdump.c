@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct IRGParam {
 	uint16_t width;
@@ -20,8 +21,26 @@ struct IRGParam {
 	int32_t gainStatus;
 };
 
+int usage() {
+	fputs("usage: irgdump [-f <IRG file>] [-t <temp out file>] [-i <image out file>]\n", stderr);
+	return 0;
+}
+
 int main(int argc, char **argv) {
-	FILE *irg = argc>1 ? fopen(argv[1],"rb") : fdopen(0, "rb");
+	char *name = NULL;
+	char *tfile = NULL;
+	char *ifile = NULL;
+	for (int arg=1; arg<argc; arg++) {
+		if (strncmp(argv[arg],"-f",2)==0)
+			name = argv[++arg];
+		else if (strncmp(argv[arg],"-t",2)==0)
+			tfile = argv[++arg];
+		else if (strncmp(argv[arg],"-i",2)==0)
+			ifile = argv[++arg];
+		else
+			return usage();
+	}
+	FILE *irg = name ? fopen(name,"rb") : fdopen(0, "rb");
 	if (!irg) {
 		perror("opening file");
 		return 1;
@@ -49,8 +68,8 @@ int main(int argc, char **argv) {
 	ip.refTemp = *(int32_t*)(buf+0x22);
 	ip.atmTrans = *(int32_t*)(buf+0x32);
 	//ip.K0/B0/K1/B1?
-	ip.pseudoCol = *(int32_t*)(buf+0x46);
-	ip.tempUnit = *(int32_t*)(buf+0x49);
+	ip.pseudoCol = (int32_t)*(buf+0x46);	// one byte, zero-extended in ASM
+	ip.tempUnit = (int32_t)*(buf+0x49);		// one byte, zero-extended in ASM
 	//ip.gainStatus?
 	fprintf(stderr,"IRG params:\n");
 	fprintf(stderr,"WxH:  %ux%u\n", ip.width, ip.height);
@@ -68,5 +87,22 @@ int main(int argc, char **argv) {
 	fprintf(stderr,"pseudoCol: %d\n", ip.pseudoCol);
 	fprintf(stderr,"tempUnit: %d\n", ip.tempUnit);
 	fprintf(stderr,"gainStatus: %d\n", ip.gainStatus);
+	// emit raw data
+	size_t off = 0x80;
+	len = ip.width * ip.height;
+	if (ifile) {
+		fprintf(stderr, "Saving raw image to: %s\n", ifile);
+		FILE *fp = fopen(ifile,"wb");
+		fwrite(buf+off, len, 1, fp);
+		fclose(fp);
+	}
+	off += len;
+	len = ip.width * ip.height * 2;
+	if (tfile) {
+		fprintf(stderr, "Saving temperature to: %s\n", ifile);
+		FILE *fp = fopen(tfile,"wb");
+		fwrite(buf+off, len, 1, fp);
+		fclose(fp);
+	}
 	return 0;
 }
