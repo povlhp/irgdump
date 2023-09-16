@@ -1,3 +1,5 @@
+> This project has moved to: https://git.sr.ht/~phlash/irgdump
+
 # IRG infrared image file dumper
 
 [Terence Eden asked](https://shkspr.mobi/blog/2023/02/reverse-engineering-the-irg-infrared-thermal-imaging-format-help-needed/)
