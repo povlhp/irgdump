@@ -1,4 +1,4 @@
-> This project has moved to: https://git.sr.ht/~phlash/irgdump
+My local copy.
 
 # IRG infrared image file dumper
 
@@ -59,6 +59,7 @@ HEADER:
 0070: <00> x 14 <ac ca>
                 [EOH?]
 
+c0 a8 00 00 => Offset beyond the 0x80 byte header for the 16-bit measurements
 HH => height (pixels)
 WW => width (pixels)
 EE => emissivity (0->1 x 10000)
@@ -68,6 +69,8 @@ DD => distance (m, x 10000)
 XX => atmospheric transmittance (0->1, x 10000)
 CC => pseudo colour index
 UU => temperature units (lookup?)
+
+c0 a8 00 00 is the offset beyond header where the 16-bit image temperature measurements starts)
 
 IMAGE DATA:
 Follows directly after the header, offset 0x80. Each 8 bit value is range-adjusted luminence
